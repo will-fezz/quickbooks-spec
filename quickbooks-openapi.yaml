@@ -9,7 +9,7 @@ info:
     For the sandbox, change the host to sandbox-quickbooks.api.intuit.com.
 
 servers:
-  - url: https://quickbooks.api.intuit.com/v3/company/REPLACE_WITH_REALM_ID
+  - url: https://quickbooks.api.intuit.com/v3/company/123146244153869
     description: Production
 
 security:
