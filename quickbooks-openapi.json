@@ -1,0 +1,1142 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "QuickBooks Online Accounting API (Home Defib subset)",
+    "version": "1.0.0",
+    "description": "Compact OpenAPI spec for the QuickBooks Online Accounting API, covering the endpoints used by the Home Defib Retool dashboard. Before hosting this file, replace REPLACE_WITH_REALM_ID in the server URL with your QuickBooks Company ID. For the sandbox, change the host to sandbox-quickbooks.api.intuit.com.\n"
+  },
+  "servers": [
+    {
+      "url": "https://quickbooks.api.intuit.com/v3/company/123146244153869",
+      "description": "Production"
+    }
+  ],
+  "security": [
+    {
+      "intuitOAuth": [
+        "com.intuit.quickbooks.accounting"
+      ]
+    }
+  ],
+  "tags": [
+    {
+      "name": "Query"
+    },
+    {
+      "name": "Company"
+    },
+    {
+      "name": "Invoices"
+    },
+    {
+      "name": "Customers"
+    },
+    {
+      "name": "Payments"
+    },
+    {
+      "name": "Items"
+    },
+    {
+      "name": "Reports"
+    }
+  ],
+  "paths": {
+    "/query": {
+      "get": {
+        "tags": [
+          "Query"
+        ],
+        "operationId": "runQuery",
+        "summary": "Run a QuickBooks query (SQL-like select)",
+        "description": "Examples: select * from Invoice where Balance > '0' order by DueDate maxresults 100. select * from Customer where Active = true startposition 1 maxresults 1000. select * from Payment where TxnDate >= '2026-01-01'. Supported entities include Invoice, Customer, Payment, Item, Estimate, SalesReceipt, CreditMemo, Bill, Vendor, Account and TaxCode.\n",
+        "parameters": [
+          {
+            "name": "query",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "example": "select * from Invoice maxresults 100"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/minorversion"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Query results",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/QueryResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/companyinfo/{companyId}": {
+      "get": {
+        "tags": [
+          "Company"
+        ],
+        "operationId": "getCompanyInfo",
+        "summary": "Get company details (use the same Realm ID as companyId)",
+        "parameters": [
+          {
+            "name": "companyId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/minorversion"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Company info",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "CompanyInfo": {
+                      "type": "object",
+                      "additionalProperties": true
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/invoice": {
+      "post": {
+        "tags": [
+          "Invoices"
+        ],
+        "operationId": "createOrUpdateInvoice",
+        "summary": "Create an invoice, or update one (include Id and SyncToken; add \"sparse\" true for partial updates)",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/minorversion"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Invoice"
+              },
+              "example": {
+                "CustomerRef": {
+                  "value": "1"
+                },
+                "Line": [
+                  {
+                    "Amount": 100.0,
+                    "DetailType": "SalesItemLineDetail",
+                    "SalesItemLineDetail": {
+                      "ItemRef": {
+                        "value": "1"
+                      },
+                      "Qty": 1,
+                      "UnitPrice": 100.0
+                    }
+                  }
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Saved invoice",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "Invoice": {
+                      "$ref": "#/components/schemas/Invoice"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/invoice/{id}": {
+      "get": {
+        "tags": [
+          "Invoices"
+        ],
+        "operationId": "getInvoice",
+        "summary": "Get an invoice by Id",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/id"
+          },
+          {
+            "$ref": "#/components/parameters/minorversion"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Invoice",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "Invoice": {
+                      "$ref": "#/components/schemas/Invoice"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/invoice/{id}/pdf": {
+      "get": {
+        "tags": [
+          "Invoices"
+        ],
+        "operationId": "getInvoicePdf",
+        "summary": "Download an invoice as PDF",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/id"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Invoice PDF",
+            "content": {
+              "application/pdf": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/invoice/{id}/send": {
+      "post": {
+        "tags": [
+          "Invoices"
+        ],
+        "operationId": "sendInvoice",
+        "summary": "Email an invoice to the customer (optionally to a different address)",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/id"
+          },
+          {
+            "name": "sendTo",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "email"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/minorversion"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Sent invoice",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "Invoice": {
+                      "$ref": "#/components/schemas/Invoice"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/customer": {
+      "post": {
+        "tags": [
+          "Customers"
+        ],
+        "operationId": "createOrUpdateCustomer",
+        "summary": "Create a customer, or update one (include Id and SyncToken)",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/minorversion"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Customer"
+              },
+              "example": {
+                "DisplayName": "Jane Smith",
+                "PrimaryEmailAddr": {
+                  "Address": "jane@example.com"
+                },
+                "PrimaryPhone": {
+                  "FreeFormNumber": "01584 000000"
+                },
+                "BillAddr": {
+                  "Line1": "1 High Street",
+                  "City": "Tenbury Wells",
+                  "PostalCode": "WR15 8AA",
+                  "Country": "United Kingdom"
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Saved customer",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "Customer": {
+                      "$ref": "#/components/schemas/Customer"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/customer/{id}": {
+      "get": {
+        "tags": [
+          "Customers"
+        ],
+        "operationId": "getCustomer",
+        "summary": "Get a customer by Id",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/id"
+          },
+          {
+            "$ref": "#/components/parameters/minorversion"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Customer",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "Customer": {
+                      "$ref": "#/components/schemas/Customer"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/payment": {
+      "post": {
+        "tags": [
+          "Payments"
+        ],
+        "operationId": "createOrUpdatePayment",
+        "summary": "Record a customer payment, optionally linked to invoices",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/minorversion"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Payment"
+              },
+              "example": {
+                "CustomerRef": {
+                  "value": "1"
+                },
+                "TotalAmt": 100.0,
+                "Line": [
+                  {
+                    "Amount": 100.0,
+                    "LinkedTxn": [
+                      {
+                        "TxnId": "123",
+                        "TxnType": "Invoice"
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Saved payment",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "Payment": {
+                      "$ref": "#/components/schemas/Payment"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/payment/{id}": {
+      "get": {
+        "tags": [
+          "Payments"
+        ],
+        "operationId": "getPayment",
+        "summary": "Get a payment by Id",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/id"
+          },
+          {
+            "$ref": "#/components/parameters/minorversion"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Payment",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "Payment": {
+                      "$ref": "#/components/schemas/Payment"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/item": {
+      "post": {
+        "tags": [
+          "Items"
+        ],
+        "operationId": "createOrUpdateItem",
+        "summary": "Create a product or service item, or update one (include Id and SyncToken)",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/minorversion"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Item"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Saved item",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "Item": {
+                      "$ref": "#/components/schemas/Item"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/item/{id}": {
+      "get": {
+        "tags": [
+          "Items"
+        ],
+        "operationId": "getItem",
+        "summary": "Get an item by Id",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/id"
+          },
+          {
+            "$ref": "#/components/parameters/minorversion"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Item",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "Item": {
+                      "$ref": "#/components/schemas/Item"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/reports/ProfitAndLoss": {
+      "get": {
+        "tags": [
+          "Reports"
+        ],
+        "operationId": "getProfitAndLoss",
+        "summary": "Profit and Loss report",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/start_date"
+          },
+          {
+            "$ref": "#/components/parameters/end_date"
+          },
+          {
+            "$ref": "#/components/parameters/date_macro"
+          },
+          {
+            "$ref": "#/components/parameters/accounting_method"
+          },
+          {
+            "name": "summarize_column_by",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "Total",
+                "Month",
+                "Week",
+                "Days",
+                "Quarter",
+                "Year",
+                "Customers",
+                "Vendors",
+                "Classes",
+                "Departments",
+                "ProductsAndServices"
+              ]
+            }
+          },
+          {
+            "$ref": "#/components/parameters/minorversion"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Report",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Report"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/reports/AgedReceivables": {
+      "get": {
+        "tags": [
+          "Reports"
+        ],
+        "operationId": "getAgedReceivables",
+        "summary": "Aged Receivables (who owes what, and how overdue)",
+        "parameters": [
+          {
+            "name": "report_date",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/date_macro"
+          },
+          {
+            "name": "aging_method",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "Report_Date",
+                "Current"
+              ]
+            }
+          },
+          {
+            "name": "aging_period",
+            "in": "query",
+            "description": "Days per ageing bucket (default 30)",
+            "schema": {
+              "type": "integer",
+              "example": 30
+            }
+          },
+          {
+            "name": "num_periods",
+            "in": "query",
+            "description": "Number of ageing buckets (default 4)",
+            "schema": {
+              "type": "integer",
+              "example": 4
+            }
+          },
+          {
+            "name": "customer",
+            "in": "query",
+            "description": "Comma-separated customer Ids to filter by",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/minorversion"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Report",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Report"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "intuitOAuth": {
+        "type": "oauth2",
+        "flows": {
+          "authorizationCode": {
+            "authorizationUrl": "https://appcenter.intuit.com/connect/oauth2",
+            "tokenUrl": "https://oauth.platform.intuit.com/oauth2/v1/tokens/bearer",
+            "refreshUrl": "https://oauth.platform.intuit.com/oauth2/v1/tokens/bearer",
+            "scopes": {
+              "com.intuit.quickbooks.accounting": "Read and write QuickBooks Online accounting data"
+            }
+          }
+        }
+      }
+    },
+    "parameters": {
+      "id": {
+        "name": "id",
+        "in": "path",
+        "required": true,
+        "schema": {
+          "type": "string"
+        }
+      },
+      "minorversion": {
+        "name": "minorversion",
+        "in": "query",
+        "required": false,
+        "schema": {
+          "type": "integer",
+          "default": 75
+        }
+      },
+      "start_date": {
+        "name": "start_date",
+        "in": "query",
+        "schema": {
+          "type": "string",
+          "format": "date",
+          "example": "2026-01-01"
+        }
+      },
+      "end_date": {
+        "name": "end_date",
+        "in": "query",
+        "schema": {
+          "type": "string",
+          "format": "date",
+          "example": "2026-12-31"
+        }
+      },
+      "date_macro": {
+        "name": "date_macro",
+        "in": "query",
+        "description": "Predefined period, used instead of start_date and end_date",
+        "schema": {
+          "type": "string",
+          "enum": [
+            "Today",
+            "Yesterday",
+            "This Week",
+            "Last Week",
+            "This Week-to-date",
+            "This Month",
+            "Last Month",
+            "This Month-to-date",
+            "This Fiscal Quarter",
+            "Last Fiscal Quarter",
+            "This Fiscal Year",
+            "Last Fiscal Year",
+            "This Fiscal Year-to-date",
+            "This Calendar Year",
+            "Last Calendar Year",
+            "This Calendar Year-to-date"
+          ]
+        }
+      },
+      "accounting_method": {
+        "name": "accounting_method",
+        "in": "query",
+        "schema": {
+          "type": "string",
+          "enum": [
+            "Accrual",
+            "Cash"
+          ]
+        }
+      }
+    },
+    "schemas": {
+      "Ref": {
+        "type": "object",
+        "properties": {
+          "value": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          }
+        }
+      },
+      "QueryResponse": {
+        "type": "object",
+        "properties": {
+          "QueryResponse": {
+            "type": "object",
+            "properties": {
+              "Invoice": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/Invoice"
+                }
+              },
+              "Customer": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/Customer"
+                }
+              },
+              "Payment": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/Payment"
+                }
+              },
+              "Item": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/Item"
+                }
+              },
+              "startPosition": {
+                "type": "integer"
+              },
+              "maxResults": {
+                "type": "integer"
+              },
+              "totalCount": {
+                "type": "integer"
+              }
+            },
+            "additionalProperties": true
+          },
+          "time": {
+            "type": "string"
+          }
+        }
+      },
+      "Invoice": {
+        "type": "object",
+        "additionalProperties": true,
+        "properties": {
+          "Id": {
+            "type": "string"
+          },
+          "SyncToken": {
+            "type": "string"
+          },
+          "sparse": {
+            "type": "boolean"
+          },
+          "DocNumber": {
+            "type": "string"
+          },
+          "TxnDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "DueDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "CustomerRef": {
+            "$ref": "#/components/schemas/Ref"
+          },
+          "BillEmail": {
+            "type": "object",
+            "properties": {
+              "Address": {
+                "type": "string"
+              }
+            }
+          },
+          "TotalAmt": {
+            "type": "number"
+          },
+          "Balance": {
+            "type": "number"
+          },
+          "CurrencyRef": {
+            "$ref": "#/components/schemas/Ref"
+          },
+          "EmailStatus": {
+            "type": "string",
+            "enum": [
+              "NotSet",
+              "NeedToSend",
+              "EmailSent"
+            ]
+          },
+          "PrivateNote": {
+            "type": "string"
+          },
+          "CustomerMemo": {
+            "type": "object",
+            "properties": {
+              "value": {
+                "type": "string"
+              }
+            }
+          },
+          "Line": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "additionalProperties": true,
+              "properties": {
+                "Amount": {
+                  "type": "number"
+                },
+                "Description": {
+                  "type": "string"
+                },
+                "DetailType": {
+                  "type": "string",
+                  "example": "SalesItemLineDetail"
+                },
+                "SalesItemLineDetail": {
+                  "type": "object",
+                  "properties": {
+                    "ItemRef": {
+                      "$ref": "#/components/schemas/Ref"
+                    },
+                    "Qty": {
+                      "type": "number"
+                    },
+                    "UnitPrice": {
+                      "type": "number"
+                    },
+                    "TaxCodeRef": {
+                      "$ref": "#/components/schemas/Ref"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "Customer": {
+        "type": "object",
+        "additionalProperties": true,
+        "properties": {
+          "Id": {
+            "type": "string"
+          },
+          "SyncToken": {
+            "type": "string"
+          },
+          "sparse": {
+            "type": "boolean"
+          },
+          "DisplayName": {
+            "type": "string"
+          },
+          "GivenName": {
+            "type": "string"
+          },
+          "FamilyName": {
+            "type": "string"
+          },
+          "CompanyName": {
+            "type": "string"
+          },
+          "Active": {
+            "type": "boolean"
+          },
+          "Balance": {
+            "type": "number"
+          },
+          "PrimaryEmailAddr": {
+            "type": "object",
+            "properties": {
+              "Address": {
+                "type": "string"
+              }
+            }
+          },
+          "PrimaryPhone": {
+            "type": "object",
+            "properties": {
+              "FreeFormNumber": {
+                "type": "string"
+              }
+            }
+          },
+          "BillAddr": {
+            "$ref": "#/components/schemas/Address"
+          },
+          "ShipAddr": {
+            "$ref": "#/components/schemas/Address"
+          },
+          "Notes": {
+            "type": "string"
+          }
+        }
+      },
+      "Address": {
+        "type": "object",
+        "properties": {
+          "Line1": {
+            "type": "string"
+          },
+          "Line2": {
+            "type": "string"
+          },
+          "City": {
+            "type": "string"
+          },
+          "CountrySubDivisionCode": {
+            "type": "string"
+          },
+          "PostalCode": {
+            "type": "string"
+          },
+          "Country": {
+            "type": "string"
+          }
+        }
+      },
+      "Payment": {
+        "type": "object",
+        "additionalProperties": true,
+        "properties": {
+          "Id": {
+            "type": "string"
+          },
+          "SyncToken": {
+            "type": "string"
+          },
+          "TxnDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "CustomerRef": {
+            "$ref": "#/components/schemas/Ref"
+          },
+          "TotalAmt": {
+            "type": "number"
+          },
+          "UnappliedAmt": {
+            "type": "number"
+          },
+          "PaymentMethodRef": {
+            "$ref": "#/components/schemas/Ref"
+          },
+          "DepositToAccountRef": {
+            "$ref": "#/components/schemas/Ref"
+          },
+          "PaymentRefNum": {
+            "type": "string"
+          },
+          "Line": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "Amount": {
+                  "type": "number"
+                },
+                "LinkedTxn": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "TxnId": {
+                        "type": "string"
+                      },
+                      "TxnType": {
+                        "type": "string",
+                        "example": "Invoice"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "Item": {
+        "type": "object",
+        "additionalProperties": true,
+        "properties": {
+          "Id": {
+            "type": "string"
+          },
+          "SyncToken": {
+            "type": "string"
+          },
+          "Name": {
+            "type": "string"
+          },
+          "Sku": {
+            "type": "string"
+          },
+          "Description": {
+            "type": "string"
+          },
+          "Type": {
+            "type": "string",
+            "enum": [
+              "Inventory",
+              "NonInventory",
+              "Service"
+            ]
+          },
+          "Active": {
+            "type": "boolean"
+          },
+          "UnitPrice": {
+            "type": "number"
+          },
+          "PurchaseCost": {
+            "type": "number"
+          },
+          "QtyOnHand": {
+            "type": "number"
+          },
+          "IncomeAccountRef": {
+            "$ref": "#/components/schemas/Ref"
+          },
+          "ExpenseAccountRef": {
+            "$ref": "#/components/schemas/Ref"
+          },
+          "AssetAccountRef": {
+            "$ref": "#/components/schemas/Ref"
+          },
+          "TrackQtyOnHand": {
+            "type": "boolean"
+          },
+          "InvStartDate": {
+            "type": "string",
+            "format": "date"
+          }
+        }
+      },
+      "Report": {
+        "type": "object",
+        "additionalProperties": true,
+        "properties": {
+          "Header": {
+            "type": "object",
+            "additionalProperties": true
+          },
+          "Columns": {
+            "type": "object",
+            "additionalProperties": true
+          },
+          "Rows": {
+            "type": "object",
+            "additionalProperties": true
+          }
+        }
+      }
+    }
+  }
+}
